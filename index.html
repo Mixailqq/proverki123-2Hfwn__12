@@ -1,53 +1,461 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title><link rel="stylesheet" href="css.css">
+    <title>Добавление текста в страницу</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .content {
+            display: flex;
+            min-height: 500px;
+        }
+
+        .editor-panel {
+            flex: 1;
+            padding: 30px;
+            background: #f8f9fa;
+            border-right: 1px solid #eee;
+        }
+
+        .preview-panel {
+            flex: 1;
+            padding: 30px;
+            background: white;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        textarea {
+            height: 120px;
+            resize: vertical;
+            font-family: monospace;
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            transition: background 0.3s;
+            margin: 5px 0;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        .secondary-btn {
+            background: #95a5a6;
+        }
+
+        .secondary-btn:hover {
+            background: #7f8c8d;
+        }
+
+        .danger-btn {
+            background: #e74c3c;
+        }
+
+        .danger-btn:hover {
+            background: #c0392b;
+        }
+
+        .text-element {
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .text-element h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .text-element p {
+            line-height: 1.6;
+            color: #34495e;
+        }
+
+        .html-code {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+
+        .element-controls {
+            margin-top: 10px;
+            text-align: right;
+        }
+
+        .element-controls button {
+            width: auto;
+            padding: 5px 10px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #7f8c8d;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        .tag-preview {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin: 0 2px;
+        }
+    </style>
 </head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Редактор содержимого страницы</h1>
+            <p>Добавляйте текст и элементы прямо в HTML страницы</p>
+        </div>
 
-<style>
-    
-    .cardneon{
-        width: 390px;
-        height: 254px;
-        background-image: linear-gradient(163deg, #00ff75 0%, #3700ff 100%);
-        border-radius: 20px;
-        transition: all .3s;
-    }
-    .cardneon2{
-        width: 390px;
-        height: 254px;
-        background-color: #1a1a1a;
-        border-radius:;
-        transition: all .2s;
-    }
-    .cardneon:hover {
-        box-shadow: 0px 0px 30px 1px rgba(0, 255, 177, 0.30);
-    }
-    .cardneon2:hover {transform: scale(0.98); border-radius: 20px;}
-body{background: #000000;}
+        <div class="content">
+            <!-- Панель редактора -->
+            <div class="editor-panel">
+                <form id="contentForm">
+                    <div class="form-group">
+                        <label for="elementType">Тип элемента:</label>
+                        <select id="elementType">
+                            <option value="paragraph">Абзац текста</option>
+                            <option value="heading">Заголовок</option>
+                            <option value="code">Блок кода</option>
+                            <option value="quote">Цитата</option>
+                        </select>
+                    </div>
 
-</style>
-<body >
-    
-    <div class="cardneon">
-        <div class="cardneon2"><h1 style="color: white;" class="container">Ку броу</h1>
+                    <div class="form-group">
+                        <label for="contentText">Текст содержимого:</label>
+                        <textarea id="contentText" placeholder="Введите ваш текст здесь..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="elementStyle">Стиль элемента:</label>
+                        <select id="elementStyle">
+                            <option value="normal">Обычный</option>
+                            <option value="important">Важный</option>
+                            <option value="warning">Предупреждение</option>
+                            <option value="success">Успех</option>
+                        </select>
+                    </div>
+
+                    <button type="submit">Добавить на страницу</button>
+                    <button type="button" class="secondary-btn" onclick="generateHTML()">Показать HTML код</button>
+                    <button type="button" class="danger-btn" onclick="clearAll()">Очистить всё</button>
+                </form>
+            </div>
+
+            <!-- Панель предпросмотра -->
+            <div class="preview-panel">
+                <h2>Предпросмотр страницы</h2>
+                <div id="contentPreview">
+                    <div class="empty-state">Здесь будет отображаться добавленный текст</div>
+                </div>
+
+                <div id="htmlOutput" style="display: none; margin-top: 30px;">
+                    <h3>Сгенерированный HTML код:</h3>
+                    <div class="html-code" id="generatedHTML"></div>
+                </div>
+            </div>
         </div>
     </div>
 
+    <script>
+        let elements = JSON.parse(localStorage.getItem('pageElements')) || [];
+        let elementId = 1;
 
+        // Загрузка сохраненных элементов при запуске
+        document.addEventListener('DOMContentLoaded', function() {
+            loadElements();
+        });
 
+        // Обработка формы
+        document.getElementById('contentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            addElement();
+        });
 
+        function addElement() {
+            const type = document.getElementById('elementType').value;
+            const text = document.getElementById('contentText').value.trim();
+            const style = document.getElementById('elementStyle').value;
+
+            if (!text) {
+                alert('Пожалуйста, введите текст');
+                return;
+            }
+
+            const element = {
+                id: elementId++,
+                type: type,
+                text: text,
+                style: style,
+                timestamp: new Date().toLocaleString('ru-RU')
+            };
+
+            elements.push(element);
+            saveElements();
+            renderElement(element);
+            document.getElementById('contentText').value = '';
+
+            // Автопрокрутка к новому элементу
+            document.getElementById('contentPreview').lastChild.scrollIntoView({
+                behavior: 'smooth'
+            });
+        }
+
+        function renderElement(element) {
+            const preview = document.getElementById('contentPreview');
+            
+            // Убираем сообщение "пусто"
+            if (preview.querySelector('.empty-state')) {
+                preview.innerHTML = '';
+            }
+
+            const elementDiv = document.createElement('div');
+            elementDiv.className = `text-element style-${element.style}`;
+            elementDiv.dataset.id = element.id;
+
+            let content = '';
+            switch (element.type) {
+                case 'heading':
+                    content = `<h3>${escapeHtml(element.text)}</h3>`;
+                    break;
+                case 'code':
+                    content = `
+                        <h3>Блок кода</h3>
+                        <pre><code>${escapeHtml(element.text)}</code></pre>
+                    `;
+                    break;
+                case 'quote':
+                    content = `
+                        <h3>Цитата</h3>
+                        <blockquote>${escapeHtml(element.text)}</blockquote>
+                    `;
+                    break;
+                default:
+                    content = `
+                        <h3>Абзац текста</h3>
+                        <p>${escapeHtml(element.text)}</p>
+                    `;
+            }
+
+            elementDiv.innerHTML = content + `
+                <div class="element-controls">
+                    <small>Добавлено: ${element.timestamp}</small>
+                    <button class="secondary-btn" onclick="editElement(${element.id})">✏️</button>
+                    <button class="danger-btn" onclick="removeElement(${element.id})">🗑️</button>
+                </div>
+            `;
+
+            // Применяем стили
+            applyStyles(elementDiv, element.style);
+            preview.appendChild(elementDiv);
+        }
+
+        function applyStyles(element, style) {
+            const styles = {
+                important: { borderColor: '#e74c3c', background: '#fddede' },
+                warning: { borderColor: '#f39c12', background: '#fef5e7' },
+                success: { borderColor: '#27ae60', background: '#d5f4e6' },
+                normal: { borderColor: '#3498db', background: '#f8f9fa' }
+            };
+
+            Object.assign(element.style, styles[style] || styles.normal);
+        }
+
+        function loadElements() {
+            const preview = document.getElementById('contentPreview');
+            preview.innerHTML = '';
+
+            if (elements.length === 0) {
+                preview.innerHTML = '<div class="empty-state">Здесь будет отображаться добавленный текст</div>';
+                return;
+            }
+
+            elements.forEach(element => {
+                if (element.id >= elementId) elementId = element.id + 1;
+                renderElement(element);
+            });
+        }
+
+        function removeElement(id) {
+            if (confirm('Удалить этот элемент?')) {
+                elements = elements.filter(el => el.id !== id);
+                saveElements();
+                loadElements();
+            }
+        }
+
+        function editElement(id) {
+            const element = elements.find(el => el.id === id);
+            if (element) {
+                document.getElementById('elementType').value = element.type;
+                document.getElementById('contentText').value = element.text;
+                document.getElementById('elementStyle').value = element.style;
+                
+                // Удаляем старый элемент
+                elements = elements.filter(el => el.id !== id);
+                saveElements();
+                loadElements();
+            }
+        }
+
+        function clearAll() {
+            if (confirm('Очистить всю страницу? Это действие нельзя отменить.')) {
+                elements = [];
+                elementId = 1;
+                saveElements();
+                loadElements();
+                document.getElementById('htmlOutput').style.display = 'none';
+            }
+        }
+
+        function generateHTML() {
+            if (elements.length === 0) {
+                alert('Нет элементов для генерации HTML');
+                return;
+            }
+
+            let htmlCode = '<!-- Сгенерированный HTML код -->\n';
+            elements.forEach(element => {
+                switch (element.type) {
+                    case 'heading':
+                        htmlCode += `<h2>${escapeHtml(element.text)}</h2>\n`;
+                        break;
+                    case 'code':
+                        htmlCode += `<pre><code>${escapeHtml(element.text)}</code></pre>\n`;
+                        break;
+                    case 'quote':
+                        htmlCode += `<blockquote>${escapeHtml(element.text)}</blockquote>\n`;
+                        break;
+                    default:
+                        htmlCode += `<p>${escapeHtml(element.text)}</p>\n`;
+                }
+            });
+
+            document.getElementById('generatedHTML').textContent = htmlCode;
+            document.getElementById('htmlOutput').style.display = 'block';
+        }
+
+        function saveElements() {
+            localStorage.setItem('pageElements', JSON.stringify(elements));
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Пример предустановленного содержимого
+        if (elements.length === 0) {
+            elements = [
+                {
+                    id: elementId++,
+                    type: 'heading',
+                    text: 'Добро пожаловать в редактор содержимого!',
+                    style: 'important',
+                    timestamp: new Date().toLocaleString('ru-RU')
+                },
+                {
+                    id: elementId++,
+                    type: 'paragraph',
+                    text: 'Это демонстрационная страница. Используйте форму слева, чтобы добавлять собственный текст и элементы на страницу.',
+                    style: 'normal',
+                    timestamp: new Date().toLocaleString('ru-RU')
+                }
+            ];
+            saveElements();
+            loadElements();
+        }
+    </script>
 </body>
 </html>
-
-
-<script>
-
-
-
-
-
-</script>
-
