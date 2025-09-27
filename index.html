@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Добавление текста в страницу</title>
+    <title>Синхронизированный редактор содержимого</title>
     <style>
         * {
             margin: 0;
@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
@@ -30,31 +30,61 @@
         .header {
             background: #2c3e50;
             color: white;
-            padding: 30px;
+            padding: 25px;
             text-align: center;
+            position: relative;
         }
 
         .header h1 {
             margin-bottom: 10px;
-            font-size: 2.5em;
+            font-size: 2.2em;
+        }
+
+        .online-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .online {
+            background: #27ae60;
+        }
+
+        .offline {
+            background: #e74c3c;
         }
 
         .content {
             display: flex;
-            min-height: 500px;
+            min-height: 600px;
         }
 
         .editor-panel {
             flex: 1;
-            padding: 30px;
+            padding: 25px;
             background: #f8f9fa;
             border-right: 1px solid #eee;
+            min-width: 350px;
         }
 
         .preview-panel {
-            flex: 1;
-            padding: 30px;
+            flex: 2;
+            padding: 25px;
             background: white;
+            overflow-y: auto;
         }
 
         .form-group {
@@ -91,19 +121,31 @@
         button {
             background: #3498db;
             color: white;
-            padding: 15px 30px;
+            padding: 15px 25px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
             font-weight: 600;
-            width: 100%;
             transition: background 0.3s;
             margin: 5px 0;
         }
 
         button:hover {
             background: #2980b9;
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-group button {
+            flex: 1;
         }
 
         .secondary-btn {
@@ -122,6 +164,14 @@
             background: #c0392b;
         }
 
+        .success-btn {
+            background: #27ae60;
+        }
+
+        .success-btn:hover {
+            background: #219a52;
+        }
+
         .text-element {
             margin: 20px 0;
             padding: 20px;
@@ -129,7 +179,12 @@
             background: #f8f9fa;
             border-left: 4px solid #3498db;
             animation: fadeIn 0.5s ease-in;
+            position: relative;
         }
+
+        .text-element.important { border-left-color: #e74c3c; background: #fddede; }
+        .text-element.warning { border-left-color: #f39c12; background: #fef5e7; }
+        .text-element.success { border-left-color: #27ae60; background: #d5f4e6; }
 
         .text-element h3 {
             color: #2c3e50;
@@ -143,33 +198,65 @@
             color: #34495e;
         }
 
-        .html-code {
-            background: #2c3e50;
-            color: #ecf0f1;
-            padding: 15px;
-            border-radius: 5px;
+        .element-meta {
+            font-size: 12px;
+            color: #7f8c8d;
             margin-top: 10px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            white-space: pre-wrap;
-            overflow-x: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .element-author {
+            font-weight: 600;
+            color: #3498db;
         }
 
         .element-controls {
-            margin-top: 10px;
-            text-align: right;
+            display: flex;
+            gap: 5px;
         }
 
         .element-controls button {
-            width: auto;
             padding: 5px 10px;
             font-size: 12px;
-            margin-left: 5px;
+            margin: 0;
         }
+
+        .user-list {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 1px solid #eee;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            padding: 5px;
+        }
+
+        .user-avatar {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .user-online { background: #27ae60; }
+        .user-offline { background: #95a5a6; }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
 
         .empty-state {
@@ -179,27 +266,47 @@
             font-style: italic;
         }
 
-        .tag-preview {
-            display: inline-block;
-            background: #3498db;
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: #27ae60;
             color: white;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 12px;
-            margin: 0 2px;
+            border-radius: 5px;
+            animation: slideIn 0.3s ease-out;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
     </style>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📝 Редактор содержимого страницы</h1>
-            <p>Добавляйте текст и элементы прямо в HTML страницы</p>
+            <h1>🌐 Синхронизированный редактор</h1>
+            <p>Изменения видны на всех устройствах в реальном времени!</p>
+            <div class="online-indicator">
+                <div class="status-dot online" id="statusDot"></div>
+                <span id="statusText">Подключение...</span>
+            </div>
         </div>
 
         <div class="content">
             <!-- Панель редактора -->
             <div class="editor-panel">
+                <div class="form-group">
+                    <label for="userName">Ваше имя:</label>
+                    <input type="text" id="userName" placeholder="Введите ваше имя" value="Аноним">
+                </div>
+
                 <form id="contentForm">
                     <div class="form-group">
                         <label for="elementType">Тип элемента:</label>
@@ -226,43 +333,144 @@
                         </select>
                     </div>
 
-                    <button type="submit">Добавить на страницу</button>
-                    <button type="button" class="secondary-btn" onclick="generateHTML()">Показать HTML код</button>
-                    <button type="button" class="danger-btn" onclick="clearAll()">Очистить всё</button>
+                    <button type="submit" class="btn-full success-btn">📤 Отправить на все устройства</button>
                 </form>
+
+                <div class="btn-group">
+                    <button class="secondary-btn" onclick="clearAll()">🗑️ Очистить всё</button>
+                    <button class="secondary-btn" onclick="exportHTML()">💾 Экспорт HTML</button>
+                </div>
+
+                <div class="user-list">
+                    <h4>👥 Активные пользователи:</h4>
+                    <div id="usersList"></div>
+                </div>
             </div>
 
             <!-- Панель предпросмотра -->
             <div class="preview-panel">
-                <h2>Предпросмотр страницы</h2>
+                <h2>📋 Общее содержимое (синхронизировано)</h2>
                 <div id="contentPreview">
-                    <div class="empty-state">Здесь будет отображаться добавленный текст</div>
-                </div>
-
-                <div id="htmlOutput" style="display: none; margin-top: 30px;">
-                    <h3>Сгенерированный HTML код:</h3>
-                    <div class="html-code" id="generatedHTML"></div>
+                    <div class="empty-state">Ожидание данных... Изменения появятся здесь автоматически</div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let elements = JSON.parse(localStorage.getItem('pageElements')) || [];
-        let elementId = 1;
+        // 🔧 КОНФИГУРАЦИЯ FIREBASE - ЗАМЕНИТЕ НА СВОЮ!
+        const firebaseConfig = {
+            apiKey: "your-api-key-here",
+            authDomain: "your-project.firebaseapp.com",
+            databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "your-app-id"
+        };
 
-        // Загрузка сохраненных элементов при запуске
-        document.addEventListener('DOMContentLoaded', function() {
-            loadElements();
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Элементы DOM
+        const contentForm = document.getElementById('contentForm');
+        const contentPreview = document.getElementById('contentPreview');
+        const usersList = document.getElementById('usersList');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+
+        // Переменные приложения
+        let currentUser = {
+            id: generateUserId(),
+            name: 'Аноним',
+            lastActive: Date.now()
+        };
+
+        // Генерация ID пользователя
+        function generateUserId() {
+            return 'user_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Обновление имени пользователя
+        document.getElementById('userName').addEventListener('change', function() {
+            currentUser.name = this.value || 'Аноним';
+            updateUserPresence();
         });
 
-        // Обработка формы
-        document.getElementById('contentForm').addEventListener('submit', function(e) {
+        // Система присутствия пользователей
+        function setupPresence() {
+            const userRef = database.ref('users/' + currentUser.id);
+            
+            // Обновление присутствия
+            function updatePresence() {
+                userRef.set({
+                    name: currentUser.name,
+                    lastActive: Date.now(),
+                    online: true
+                });
+            }
+
+            // Установка onDisconnect
+            userRef.onDisconnect().set({
+                name: currentUser.name,
+                lastActive: Date.now(),
+                online: false
+            });
+
+            // Обновление каждые 30 секунд
+            updatePresence();
+            setInterval(updatePresence, 30000);
+
+            // Следим за другими пользователями
+            database.ref('users').on('value', (snapshot) => {
+                updateUsersList(snapshot.val());
+            });
+        }
+
+        // Обновление списка пользователей
+        function updateUsersList(users) {
+            if (!users) {
+                usersList.innerHTML = '<div class="user-item">Нет активных пользователей</div>';
+                return;
+            }
+
+            const now = Date.now();
+            let html = '';
+            
+            Object.entries(users).forEach(([id, user]) => {
+                const isOnline = user.online && (now - user.lastActive < 40000);
+                html += `
+                    <div class="user-item">
+                        <div class="user-avatar ${isOnline ? 'user-online' : 'user-offline'}"></div>
+                        <span>${escapeHtml(user.name)}</span>
+                    </div>
+                `;
+            });
+
+            usersList.innerHTML = html;
+        }
+
+        // Загрузка и синхронизация содержимого
+        function setupContentSync() {
+            database.ref('content').on('value', (snapshot) => {
+                const content = snapshot.val();
+                renderContent(content);
+            });
+
+            // Слушаем изменения в реальном времени
+            database.ref('content').on('child_added', (snapshot) => {
+                showNotification('Новый элемент добавлен!');
+            });
+        }
+
+        // Отправка нового элемента
+        contentForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            addElement();
+            sendElement();
         });
 
-        function addElement() {
+        function sendElement() {
             const type = document.getElementById('elementType').value;
             const text = document.getElementById('contentText').value.trim();
             const style = document.getElementById('elementStyle').value;
@@ -273,189 +481,197 @@
             }
 
             const element = {
-                id: elementId++,
+                id: generateElementId(),
                 type: type,
                 text: text,
                 style: style,
-                timestamp: new Date().toLocaleString('ru-RU')
+                author: currentUser.name,
+                authorId: currentUser.id,
+                timestamp: Date.now(),
+                timestampReadable: new Date().toLocaleString('ru-RU')
             };
 
-            elements.push(element);
-            saveElements();
-            renderElement(element);
-            document.getElementById('contentText').value = '';
-
-            // Автопрокрутка к новому элементу
-            document.getElementById('contentPreview').lastChild.scrollIntoView({
-                behavior: 'smooth'
-            });
+            // Сохраняем в Firebase
+            database.ref('content/' + element.id).set(element)
+                .then(() => {
+                    document.getElementById('contentText').value = '';
+                })
+                .catch((error) => {
+                    console.error('Ошибка отправки:', error);
+                    alert('Ошибка отправки. Проверьте подключение к интернету.');
+                });
         }
 
-        function renderElement(element) {
-            const preview = document.getElementById('contentPreview');
-            
-            // Убираем сообщение "пусто"
-            if (preview.querySelector('.empty-state')) {
-                preview.innerHTML = '';
-            }
-
-            const elementDiv = document.createElement('div');
-            elementDiv.className = `text-element style-${element.style}`;
-            elementDiv.dataset.id = element.id;
-
-            let content = '';
-            switch (element.type) {
-                case 'heading':
-                    content = `<h3>${escapeHtml(element.text)}</h3>`;
-                    break;
-                case 'code':
-                    content = `
-                        <h3>Блок кода</h3>
-                        <pre><code>${escapeHtml(element.text)}</code></pre>
-                    `;
-                    break;
-                case 'quote':
-                    content = `
-                        <h3>Цитата</h3>
-                        <blockquote>${escapeHtml(element.text)}</blockquote>
-                    `;
-                    break;
-                default:
-                    content = `
-                        <h3>Абзац текста</h3>
-                        <p>${escapeHtml(element.text)}</p>
-                    `;
-            }
-
-            elementDiv.innerHTML = content + `
-                <div class="element-controls">
-                    <small>Добавлено: ${element.timestamp}</small>
-                    <button class="secondary-btn" onclick="editElement(${element.id})">✏️</button>
-                    <button class="danger-btn" onclick="removeElement(${element.id})">🗑️</button>
-                </div>
-            `;
-
-            // Применяем стили
-            applyStyles(elementDiv, element.style);
-            preview.appendChild(elementDiv);
+        function generateElementId() {
+            return 'elem_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
         }
 
-        function applyStyles(element, style) {
-            const styles = {
-                important: { borderColor: '#e74c3c', background: '#fddede' },
-                warning: { borderColor: '#f39c12', background: '#fef5e7' },
-                success: { borderColor: '#27ae60', background: '#d5f4e6' },
-                normal: { borderColor: '#3498db', background: '#f8f9fa' }
-            };
+        // Отрисовка содержимого
+        function renderContent(content) {
+            contentPreview.innerHTML = '';
 
-            Object.assign(element.style, styles[style] || styles.normal);
-        }
-
-        function loadElements() {
-            const preview = document.getElementById('contentPreview');
-            preview.innerHTML = '';
-
-            if (elements.length === 0) {
-                preview.innerHTML = '<div class="empty-state">Здесь будет отображаться добавленный текст</div>';
+            if (!content) {
+                contentPreview.innerHTML = '<div class="empty-state">Пока нет содержимого</div>';
                 return;
             }
 
+            // Преобразуем в массив и сортируем по времени
+            const elements = Object.values(content).sort((a, b) => a.timestamp - b.timestamp);
+
             elements.forEach(element => {
-                if (element.id >= elementId) elementId = element.id + 1;
-                renderElement(element);
-            });
-        }
+                const elementDiv = document.createElement('div');
+                elementDiv.className = `text-element ${element.style}`;
+                elementDiv.dataset.id = element.id;
 
-        function removeElement(id) {
-            if (confirm('Удалить этот элемент?')) {
-                elements = elements.filter(el => el.id !== id);
-                saveElements();
-                loadElements();
-            }
-        }
-
-        function editElement(id) {
-            const element = elements.find(el => el.id === id);
-            if (element) {
-                document.getElementById('elementType').value = element.type;
-                document.getElementById('contentText').value = element.text;
-                document.getElementById('elementStyle').value = element.style;
-                
-                // Удаляем старый элемент
-                elements = elements.filter(el => el.id !== id);
-                saveElements();
-                loadElements();
-            }
-        }
-
-        function clearAll() {
-            if (confirm('Очистить всю страницу? Это действие нельзя отменить.')) {
-                elements = [];
-                elementId = 1;
-                saveElements();
-                loadElements();
-                document.getElementById('htmlOutput').style.display = 'none';
-            }
-        }
-
-        function generateHTML() {
-            if (elements.length === 0) {
-                alert('Нет элементов для генерации HTML');
-                return;
-            }
-
-            let htmlCode = '<!-- Сгенерированный HTML код -->\n';
-            elements.forEach(element => {
+                let contentHTML = '';
                 switch (element.type) {
                     case 'heading':
-                        htmlCode += `<h2>${escapeHtml(element.text)}</h2>\n`;
+                        contentHTML = `<h3>${escapeHtml(element.text)}</h3>`;
                         break;
                     case 'code':
-                        htmlCode += `<pre><code>${escapeHtml(element.text)}</code></pre>\n`;
+                        contentHTML = `
+                            <h3>🔧 Блок кода</h3>
+                            <pre><code>${escapeHtml(element.text)}</code></pre>
+                        `;
                         break;
                     case 'quote':
-                        htmlCode += `<blockquote>${escapeHtml(element.text)}</blockquote>\n`;
+                        contentHTML = `
+                            <h3>💬 Цитата</h3>
+                            <blockquote>${escapeHtml(element.text)}</blockquote>
+                        `;
                         break;
                     default:
-                        htmlCode += `<p>${escapeHtml(element.text)}</p>\n`;
+                        contentHTML = `
+                            <h3>📝 Абзац текста</h3>
+                            <p>${escapeHtml(element.text)}</p>
+                        `;
                 }
+
+                elementDiv.innerHTML = contentHTML + `
+                    <div class="element-meta">
+                        <span>Автор: <span class="element-author">${escapeHtml(element.author)}</span></span>
+                        <span>${element.timestampReadable}</span>
+                    </div>
+                `;
+
+                contentPreview.appendChild(elementDiv);
             });
 
-            document.getElementById('generatedHTML').textContent = htmlCode;
-            document.getElementById('htmlOutput').style.display = 'block';
+            // Автопрокрутка к последнему элементу
+            contentPreview.lastChild?.scrollIntoView({ behavior: 'smooth' });
         }
 
-        function saveElements() {
-            localStorage.setItem('pageElements', JSON.stringify(elements));
+        // Управление содержимым
+        function clearAll() {
+            if (confirm('Очистить всё содержимое у всех пользователей?')) {
+                database.ref('content').remove()
+                    .then(() => {
+                        showNotification('Содержимое очищено');
+                    })
+                    .catch((error) => {
+                        alert('Ошибка очистки: ' + error.message);
+                    });
+            }
         }
 
+        function exportHTML() {
+            database.ref('content').once('value')
+                .then((snapshot) => {
+                    const content = snapshot.val();
+                    if (!content) {
+                        alert('Нет содержимого для экспорта');
+                        return;
+                    }
+
+                    let htmlCode = '<!-- Экспортированное содержимое -->\n';
+                    Object.values(content).sort((a, b) => a.timestamp - b.timestamp).forEach(element => {
+                        switch (element.type) {
+                            case 'heading':
+                                htmlCode += `<h2>${escapeHtml(element.text)}</h2>\n`;
+                                break;
+                            case 'code':
+                                htmlCode += `<pre><code>${escapeHtml(element.text)}</code></pre>\n`;
+                                break;
+                            case 'quote':
+                                htmlCode += `<blockquote>${escapeHtml(element.text)}</blockquote>\n`;
+                                break;
+                            default:
+                                htmlCode += `<p>${escapeHtml(element.text)}</p>\n`;
+                        }
+                    });
+
+                    // Создаем файл для скачивания
+                    const blob = new Blob([htmlCode], { type: 'text/html' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'exported-content.html';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
+        }
+
+        // Вспомогательные функции
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        // Пример предустановленного содержимого
-        if (elements.length === 0) {
-            elements = [
-                {
-                    id: elementId++,
-                    type: 'heading',
-                    text: 'Добро пожаловать в редактор содержимого!',
-                    style: 'important',
-                    timestamp: new Date().toLocaleString('ru-RU')
-                },
-                {
-                    id: elementId++,
-                    type: 'paragraph',
-                    text: 'Это демонстрационная страница. Используйте форму слева, чтобы добавлять собственный текст и элементы на страницу.',
-                    style: 'normal',
-                    timestamp: new Date().toLocaleString('ru-RU')
-                }
-            ];
-            saveElements();
-            loadElements();
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
         }
+
+        // Мониторинг подключения
+        function setupConnectionMonitoring() {
+            const connectedRef = database.ref(".info/connected");
+            
+            connectedRef.on("value", (snapshot) => {
+                if (snapshot.val() === true) {
+                    statusDot.className = 'status-dot online';
+                    statusText.textContent = 'Подключено';
+                    showNotification('Синхронизация активна');
+                } else {
+                    statusDot.className = 'status-dot offline';
+                    statusText.textContent = 'Отключено';
+                }
+            });
+        }
+
+        // Инициализация приложения
+        function initApp() {
+            currentUser.name = document.getElementById('userName').value;
+            setupPresence();
+            setupContentSync();
+            setupConnectionMonitoring();
+            
+            // Добавляем демо-сообщение при первом запуске
+            database.ref('content').once('value').then((snapshot) => {
+                if (!snapshot.exists()) {
+                    const demoElement = {
+                        id: generateElementId(),
+                        type: 'heading',
+                        text: 'Добро пожаловать в синхронизированный редактор!',
+                        style: 'important',
+                        author: 'Система',
+                        authorId: 'system',
+                        timestamp: Date.now(),
+                        timestampReadable: new Date().toLocaleString('ru-RU')
+                    };
+                    database.ref('content/' + demoElement.id).set(demoElement);
+                }
+            });
+        }
+
+        // Запуск приложения
+        document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
